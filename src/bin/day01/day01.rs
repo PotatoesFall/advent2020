@@ -1,7 +1,7 @@
 use std::fs;
 
 fn main() {
-    let input = fs::read_to_string("input").expect("Could not read input.");
+    let input = fs::read_to_string("input/input01").expect("Could not read input.");
 
     let numbers = parse(input);
 
