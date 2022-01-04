@@ -4,10 +4,10 @@ mod lib;
 fn main() {
     let input = fs::read_to_string("input/input02").expect("Could not read input.");
 
-    let mut passwords = Vec::new();
-    for line in input.split("\n") {
-        passwords.push(lib::PasswordLine::from_input(line));
-    }
+    let passwords: Vec<lib::PasswordLine> = input
+        .split("\n")
+        .map(|line| lib::PasswordLine::from_input(line))
+        .collect();
 
     let mut count1 = 0;
     let mut count2 = 0;
