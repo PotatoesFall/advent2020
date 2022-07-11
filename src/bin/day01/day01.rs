@@ -1,7 +1,7 @@
-use std::fs;
+use advent2020;
 
 fn main() {
-    let input = fs::read_to_string("input/input01").expect("Could not read input.");
+    let input = advent2020::read_input("input01");
 
     let numbers = parse(input);
 

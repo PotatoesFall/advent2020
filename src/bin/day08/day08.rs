@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::{fmt, fs, iter};
+use std::{fmt, iter};
 
 struct Instruction {
     value: i64,
@@ -23,7 +23,7 @@ impl fmt::Debug for Instruction {
 }
 
 fn main() {
-    let input = fs::read_to_string("input/input08.txt").unwrap();
+    let input = advent2020::read_input("input/input08.txt");
 
     let instructions = parse_instructions(input);
 
