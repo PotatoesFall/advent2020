@@ -1,39 +1,24 @@
 use std::collections::HashSet;
-use std::{fmt, iter};
 
+#[derive(Debug, Clone)]
 struct Instruction {
     value: i64,
     typ: InstructionType,
 }
 
+#[derive(Debug, Clone)]
 enum InstructionType {
     Nop,
     Acc,
     Jmp,
 }
 
-impl fmt::Debug for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.typ {
-            InstructionType::Nop => f.write_str("Nop"),
-            InstructionType::Acc => f.debug_tuple("Acc").field(&self.value).finish(),
-            InstructionType::Jmp => f.debug_tuple("Jmp").field(&self.value).finish(),
-        }
-    }
-}
-
 fn main() {
-    let input = advent2020::read_input("input/input08.txt");
+    let input = advent2020::read_input("input08.txt");
 
     let instructions = parse_instructions(input);
 
-    // for instruction in instructions {
-    //     match instruction {
-    //         Instruction::Nop => println!("Nop"),
-    //         Instruction::Acc(v) => println!("Acc {}", v),
-    //         Instruction::Jmp(v) => println!("Jmp {}", v),
-    //     }
-    // }
+    // dbg!(&instructions);
 
     let mut pos: i64 = 0;
     let mut acc: i64 = 0;
@@ -51,6 +36,7 @@ fn main() {
 
     let mut maybe_nop_to_jmp = Vec::new();
     let mut maybe_jmp_to_nop = Vec::new();
+    let mut used2 = HashSet::new();
 
     for (i, instruction) in instructions.iter().enumerate() {
         let pos = i as i64;
@@ -58,33 +44,59 @@ fn main() {
             InstructionType::Acc => {}
             InstructionType::Nop => {
                 let could_jump_to = pos + instruction.value;
-                if !used.contains(&could_jump_to) {
+                if !used.contains(&could_jump_to) && !used2.contains(&could_jump_to) {
                     maybe_nop_to_jmp.push(i);
+                    used2.insert(i as i64);
                 }
             }
             InstructionType::Jmp => {
                 let could_nop_to = pos + 1;
-                if !used.contains(&could_nop_to) {
+                if !used.contains(&could_nop_to) && !used2.contains(&could_nop_to) {
                     maybe_jmp_to_nop.push(i);
                 }
             }
         }
     }
 
-    dbg!(maybe_nop_to_jmp);
-    dbg!(maybe_jmp_to_nop);
+    // dbg!(&maybe_nop_to_jmp);
+    // dbg!(&maybe_jmp_to_nop);
 
-    for i in &maybe_nop_to_jmp {
-        // I fucking hate this language wtf is going on
-        let mut instruction= instructions.get(i.clone()).unwrap();
-        let mut owned_instruction:Instruction = instruction.clone().to_owned();
-        instruction.typ = InstructionType::Jmp;
-        instructions.splice(i..&(i+1), iter::once(instruction));
+    for i in maybe_nop_to_jmp {
+        let mut instructions = instructions.clone();
+        instructions[i].typ = InstructionType::Jmp;
+        if finishes(&instructions) {
+            break;
+        }
+    }
+
+    for i in maybe_jmp_to_nop {
+        let mut instructions = instructions.clone();
+        instructions[i].typ = InstructionType::Nop;
+        if finishes(&instructions) {
+            break;
+        }
     }
 }
 
 fn finishes(instructions: &Vec<Instruction>) -> bool {
-    false
+    let mut pos: i64 = 0;
+    let mut acc: i64 = 0;
+    let mut used = HashSet::new();
+    loop {
+        let instruction;
+        match instructions.get(pos as usize) {
+            Some(i) => instruction = i,
+            None => {
+                println!("Part 2 - {}", acc);
+                return true;
+            }
+        }
+        used.insert(pos);
+        execute(&mut pos, &mut acc, &instruction);
+        if used.contains(&pos) {
+            return false;
+        }
+    }
 }
 
 fn execute(pos: &mut i64, acc: &mut i64, instruction: &Instruction) {
