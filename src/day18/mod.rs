@@ -1,8 +1,4 @@
-use std::str::Chars;
-
-// TODO: use FromStr trait
-// https://rust-lang-nursery.github.io/rust-cookbook/text/string_parsing.html
-// even better, read this: https://adriann.github.io/rust_parser.html
+use super::scanner::Scanner;
 
 pub enum Operation {
     Addition,
@@ -29,14 +25,18 @@ pub struct Instruction {
 }
 
 impl Instruction {
-    fn parse(input: &mut Chars) -> Instruction {
-        println!("parsing instruction from: {:?}", input.as_str());
-
+    fn parse(input: &mut Scanner) -> Instruction {
         trim_spaces(input);
 
-        println!("char: {:?}", input.peekable().peek().unwrap());
+        // return early if just a number
+        if input.peek().unwrap().is_numeric() {
+            return Instruction {
+                op: Operation::Addition,
+                v: Value::Number(parse_number(input)),
+            };
+        }
 
-        match input.next().unwrap() {
+        match input.pop().unwrap() {
             '+' => Instruction {
                 op: Operation::Addition,
                 v: Value::Number(parse_number(input)),
@@ -53,7 +53,7 @@ impl Instruction {
                     v: Value::Parentheses(Expression::parse(input)),
                 };
 
-                let c = input.next().unwrap();
+                let c = input.pop().unwrap();
                 if c != ')' {
                     panic!();
                 }
@@ -80,15 +80,12 @@ pub struct Expression {
 }
 
 impl Expression {
-    pub fn parse(input: &mut Chars) -> Expression {
-        println!("parsing line: {:?}", input.as_str());
-
+    pub fn parse(input: &mut Scanner) -> Expression {
         let mut expr = Expression {
             instructions: Vec::new(),
         };
 
-        while input.peekable().peek().is_some() {
-            trim_spaces(input);
+        while input.peek().is_some() {
             expr.instructions.push(Instruction::parse(input));
         }
 
@@ -106,19 +103,25 @@ impl Expression {
     }
 }
 
-fn trim_spaces(input: &mut Chars) {
-    let peeked = *input.by_ref().peekable().peek().unwrap();
-    println!("peeked : {:?}, {}", peeked, peeked == ' ');
+fn trim_spaces(input: &mut Scanner) {
+    let peeked = input.peek();
+    if peeked.is_none() {
+        return;
+    }
 
-    while *input.by_ref().peekable().peek().unwrap() == ' ' {
-        input.next();
+    while input.peek().eq(&Option::from(' ')) {
+        input.pop();
     }
 }
 
-fn parse_number(input: &mut Chars) -> i64 {
+fn parse_number(input: &mut Scanner) -> i64 {
+    trim_spaces(input);
+
+    println!("about to parse_number: {:?}", input.str());
+
     let mut str = String::new();
-    while input.by_ref().peekable().peek().unwrap().is_numeric() {
-        str.push(input.next().unwrap());
+    while input.peek().is_some() && input.peek().unwrap().is_numeric() {
+        str.push(input.pop().unwrap());
     }
     str.parse().unwrap()
 }

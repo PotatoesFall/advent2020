@@ -5,3 +5,5 @@ pub fn read_input(filename: &str) -> String {
 }
 
 pub mod day18;
+
+pub mod scanner;
